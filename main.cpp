@@ -11,7 +11,7 @@ extern "C" __declspec(dllexport) void dummyExport()
 }
 
 int connection_counter = 0;
-bool title_screen = false;
+bool main_menu = false;
 
 typedef HINTERNET (WINAPI* internet_open_w_ptr)(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags);
 internet_open_w_ptr InternetOpenW_original;
@@ -29,7 +29,7 @@ HINTERNET WINAPI InternetOpenW_hook(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWS
     printf("dwFlags: %i\n", dwFlags);
     #endif
     
-    if (!title_screen)
+    if (!main_menu)
     {
         if (lstrcmpW(lpszAgent, L"Steam") == 0)
         {
@@ -61,7 +61,7 @@ BOOL InternetCloseHandle_hook(HINTERNET hInternet)
     printf("hInternet: %p\n", hInternet);
     #endif
     
-    if (!title_screen)
+    if (!main_menu)
     {
         connection_counter++;
         return TRUE;
@@ -91,7 +91,7 @@ HINTERNET WINAPI InternetConnectW_hook(HINTERNET hInternet, LPCWSTR lpszServerNa
     printf("dwContext: %lli\n", dwContext);
     #endif
 
-    if (!title_screen)
+    if (!main_menu)
     {
         if (lstrcmpW(lpszServerName, L"ggst-game.guiltygear.com") == 0 && nServerPort == 443)
         {
@@ -132,7 +132,7 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
     printf("dwContext: %lli\n", dwContext);
     #endif
 
-    if (!title_screen)
+    if (!main_menu)
     {
         if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/statistics/get") == 0)
         {
@@ -180,7 +180,7 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
         else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/sys/get_news") == 0)
         {
             printf("Resuming normal execution\n"); // Should probably unhook
-            title_screen = true;
+            main_menu = true;
         }
         else
         {
