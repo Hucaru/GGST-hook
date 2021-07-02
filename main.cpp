@@ -2,7 +2,6 @@
 #include <wininet.h>
 #include <stdio.h>
 #include "detours.h"
-#include <map>
 
 extern "C" __declspec(dllexport) void dummyExport()
 {
