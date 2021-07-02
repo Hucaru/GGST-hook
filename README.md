@@ -4,7 +4,7 @@ Decreases the time taken to get to the main menu. My time went from `2m 30s` to 
 
 ## Disclaimer
 
-User at your own risk, I am not responsible if ArcSys decides to ban people. I have only tested this as far as getting into a lobby and moving around.
+User at your own risk, I am not responsible if ArcSys decides to ban people. This should only be active until you get to the main menu at which point normal behaviour is resumed.
 
 ## How to build
 
