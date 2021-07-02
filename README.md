@@ -20,7 +20,7 @@ Once DLL has been compiled use a tool such as CFF explorer to add the DLL to the
 
 ## Further improvements
 
-The `POST` uri `/api/statistics/set` request connections cannot be trivially cached as it causes an R-code upload 
+The `POST` uri `/api/statistics/set` request connections cannot be trivially cached as it causes an R-code upload error
 
 ## Screenshots
 
