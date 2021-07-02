@@ -8,7 +8,7 @@ User at your own risk, I am not responsible if ArcSys decides to ban people. Thi
 
 ## How to build
 
-Make sure visual studio is installed and edit the `VSTOOLS` variable in `build.bat` to point to your installed version of `vcvars32.bat`. Make sure you point to the 64-bit version.
+Make sure visual studio is installed and edit the `VSTOOLS` variable in `build.bat` to point to your installed version of `vcvars64.bat`. Make sure you point to the 64-bit version.
 
 Download the Microsoft Detours repo and compile the x64 lib and copy the compiled lib and header file into this directory.
 
