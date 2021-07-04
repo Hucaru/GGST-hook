@@ -152,21 +152,22 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
 
             return request_cache_statistics_get;
         }
-        // This causes a fail to upload R code error, some of these requests might be ok to cache
-        // else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/statistics/set") == 0)
-        // {
-        //     if (!request_cache_statistics_set)
-        //     {
-        //         printf("Caching http open request for %ws %ws\n", lpszVerb, lpszObjectName);
-        //         request_cache_statistics_set = HttpOpenRequestW_original(hConnect, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, dwContext);
-        //     }
-        //     else
-        //     {
-        //         printf("Using http open request cache\n");
-        //     }
+        
+        else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/statistics/set") == 0)
+        {
+            // This causes a fail to upload R code error, some of these requests might be ok to cache
+            // if (!request_cache_statistics_set)
+            // {
+            //     printf("Caching http open request for %ws %ws\n", lpszVerb, lpszObjectName);
+            //     request_cache_statistics_set = HttpOpenRequestW_original(hConnect, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, dwContext);
+            // }
+            // else
+            // {
+            //     printf("Using http open request cache\n");
+            // }
 
-        //     return request_cache_statistics_set;
-        // }
+            // return request_cache_statistics_set;
+        }
         else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/catalog/get_replay") == 0)
         {
             if (!request_cache_catalog_get_replay)
@@ -190,7 +191,36 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
 
     printf("Creating HTTP request: %ws %ws\n", lpszVerb, lpszObjectName);
     return HttpOpenRequestW_original(hConnect, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, dwContext);
+}
+
+typedef BOOL (WINAPI* http_send_request_ptr)(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
+http_send_request_ptr HttpSendRequestW_original;
+
+BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
+{
+    printf("Send http request: %ws %.*02hhXs\n", lpszHeaders, dwOptionalLength, (unsigned char*)lpOptional);
+    return HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
+}
+
+typedef BOOL (WINAPI* internet_read_file_ptr)(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead, LPDWORD lpdwNumberOfBytesRead);
+internet_read_file_ptr InternetReadFile_original;
+
+BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead, LPDWORD lpdwNumberOfBytesRead)
+{
+    BOOL result = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
+
+    #if 0
+    unsigned char* buffer = (unsigned char*)lpBuffer;
+
+    printf("Read file buffer(%i):\n", *lpdwNumberOfBytesRead);
+    for (DWORD i = 0; i < *lpdwNumberOfBytesRead; ++i)
+    {
+        printf("%02hhX ", (buffer + i));
+    }
+    printf("\n");
+    #endif
     
+    return result;
 }
 
 BOOL apply_hook(__inout PVOID* ppvTarget, __in PVOID pvDetour, char* name)
@@ -248,6 +278,12 @@ BOOL hook()
 
     HttpOpenRequestW_original = &HttpOpenRequestW;
     if (!apply_hook((PVOID*)&HttpOpenRequestW_original, (PVOID)HttpOpenRequestW_hook, "HttpOpenRequestW"))
+    {
+        return FALSE;
+    }
+
+    InternetReadFile_original = &InternetReadFile;
+    if (!apply_hook((PVOID*)&InternetReadFile_original, (PVOID)InternetReadFile_hook, "InternetReadFile"))
     {
         return FALSE;
     }
