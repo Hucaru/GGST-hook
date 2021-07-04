@@ -10,7 +10,7 @@ extern "C" __declspec(dllexport) void dummyExport()
 }
 
 int connection_counter = 0;
-bool main_menu = false;
+bool login_state = false;
 
 typedef HINTERNET (WINAPI* internet_open_w_ptr)(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags);
 internet_open_w_ptr InternetOpenW_original;
@@ -28,7 +28,7 @@ HINTERNET WINAPI InternetOpenW_hook(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWS
     printf("dwFlags: %i\n", dwFlags);
     #endif
     
-    if (!main_menu)
+    if (login_state)
     {
         if (lstrcmpW(lpszAgent, L"Steam") == 0)
         {
@@ -59,10 +59,10 @@ BOOL InternetCloseHandle_hook(HINTERNET hInternet)
     printf(":::InternetCloseHandle:::\n");
     printf("hInternet: %p\n", hInternet);
     #endif
+    connection_counter++;
     
-    if (!main_menu)
+    if (login_state)
     {
-        connection_counter++;
         return TRUE;
     }
     else
@@ -90,7 +90,7 @@ HINTERNET WINAPI InternetConnectW_hook(HINTERNET hInternet, LPCWSTR lpszServerNa
     printf("dwContext: %lli\n", dwContext);
     #endif
 
-    if (!main_menu)
+    if (login_state)
     {
         if (lstrcmpW(lpszServerName, L"ggst-game.guiltygear.com") == 0 && nServerPort == 443)
         {
@@ -131,7 +131,12 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
     printf("dwContext: %lli\n", dwContext);
     #endif
 
-    if (!main_menu)
+    if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/user/login") == 0)
+    {
+        login_state = true;
+    }
+
+    if (login_state)
     {
         if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/statistics/get") == 0)
         {
@@ -178,15 +183,12 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
         }
         else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/sys/get_news") == 0)
         {
-            printf("Resuming normal execution\n"); // Should probably unhook
-            main_menu = true;
-        }
-        else
-        {
-            printf("Creating HTTP request: %ws %ws", lpszVerb, lpszObjectName);
+            printf("\nResuming normal execution\n"); // Should probably unhook
+            login_state = false;
         }
     }
 
+    printf("Creating HTTP request: %ws %ws\n", lpszVerb, lpszObjectName);
     return HttpOpenRequestW_original(hConnect, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, dwContext);
     
 }
@@ -272,5 +274,4 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
     }
 
     return TRUE;
-}
-   
+}   
