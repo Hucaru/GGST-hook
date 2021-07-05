@@ -1,10 +1,10 @@
 # Guilty Gear Strive Client Hook
 
-Decreases the time taken to get to the main menu. My time went from `2m 30s` to `1m 25s` (this depends on distance to server).
+Decreases the time taken to get to the main menu (slight speedup to quick match as arcsys go through the login process again when you select this option) . My time went from `2m 30s` to `1m 25s` (this depends on distance to server).
 
 ## Disclaimer
 
-User at your own risk, I am not responsible if ArcSys decides to ban people. This should only be active until you get to the main menu at which point normal behaviour is resumed.
+I have been using this for 3 days. The likelyhood arcsys can even detect this is super small but on the off chance their server records how long a particular socket and http session is open for: Use at your own risk.
 
 ## How to build
 
