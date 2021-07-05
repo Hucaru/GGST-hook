@@ -4,7 +4,7 @@ Decreases the time taken to get to the main menu (slight speedup to quick match 
 
 ## Disclaimer
 
-I have been using this for 3 days. The likelyhood arcsys can even detect this is super small but on the off chance their server records how long a particular socket and http session is open for: Use at your own risk.
+I have been using this since 02/07/2021. The likelyhood arcsys can even detect this is super small but on the off chance their server records how long a particular socket and http session is open for: Use at your own risk.
 
 ## How to build
 
