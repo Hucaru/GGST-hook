@@ -133,7 +133,11 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
 
     if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/user/login") == 0)
     {
-        login_state = true;
+        login_state = true; // when quick matching this is triggered again
+    }
+    else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/catalog/get_lobby") == 0)
+    {
+        login_state = false;
     }
 
     if (login_state)
@@ -163,6 +167,7 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
             // }
             // else
             // {
+            //     HttpEndRequestW(request_cache_statistics_set, NULL, 0, 0);
             //     printf("Using http open request cache\n");
             // }
 
@@ -198,7 +203,7 @@ http_send_request_ptr HttpSendRequestW_original;
 
 BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
 {
-    printf("Send http request: %ws %.*02hhXs\n", lpszHeaders, dwOptionalLength, (unsigned char*)lpOptional);
+    printf("Send http request, headers(size:%i): %ws optional(size:%i)\n", dwHeadersLength, lpszHeaders, dwOptionalLength);
     return HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
 }
 
@@ -221,6 +226,15 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
     #endif
     
     return result;
+}
+
+typedef BOOL (WINAPI* is_debugger_present_ptr)();
+is_debugger_present_ptr IsDebuggerPresent_original;
+
+BOOL IsDebuggerPresent_hook()
+{
+    printf("IsDebuggerPresent called\n");
+    return FALSE;
 }
 
 BOOL apply_hook(__inout PVOID* ppvTarget, __in PVOID pvDetour, char* name)
@@ -282,8 +296,20 @@ BOOL hook()
         return FALSE;
     }
 
+    HttpSendRequestW_original = &HttpSendRequestW;
+    if (!apply_hook((PVOID*)&HttpSendRequestW_original, (PVOID)HttpSendRequestW_hook, "HttpSendRequestW"))
+    {
+        return FALSE;
+    }
+
     InternetReadFile_original = &InternetReadFile;
     if (!apply_hook((PVOID*)&InternetReadFile_original, (PVOID)InternetReadFile_hook, "InternetReadFile"))
+    {
+        return FALSE;
+    }
+
+    IsDebuggerPresent_original = &IsDebuggerPresent;
+    if (!apply_hook((PVOID*)&IsDebuggerPresent_original, (PVOID)IsDebuggerPresent_hook, "IsDebuggerPresent"))
     {
         return FALSE;
     }
