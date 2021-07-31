@@ -28,4 +28,4 @@ Running `build.bat` should compile the DLL.
 - Select `dummyExport` and then press the `Import by Name` button
 - Press the `Rebuild Import Table` button and then save the dll
 
-![CFF explorer import table addition](cff.png)
+![CFF explorer import table addition](/cff.png?raw=true)
