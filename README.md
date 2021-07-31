@@ -1,12 +1,14 @@
 # Guilty Gear Strive Client Hook
 
-Decreases the time taken to get to the main menu (slight speedup to quick match as arcsys go through the login process again when you select this option) . My time went from `2m 30s` to `1m 25s` (this depends on distance to server).
+Decreases the time taken to get to the main menu and start quick match. Unlike other solutions this is resilient to client version updates (unless they overhaul their network handling or modify their api endpoints) and does not requrie you to run a proxy application.
 
-## Disclaimer
+# How this works
 
-I have been using this since 02/07/2021. The likelyhood arcsys can even detect this is super small but on the off chance their server records how long a particular socket and http session is open for: Use at your own risk.
+By caching handles and requests the client makes. This means tls/tcp initialisation packets are no longer sent (except for when a new api call is made)
 
-## How to build
+## How to get
+
+Download the latest release, or alternatively build from source:
 
 Make sure visual studio is installed and edit the `VSTOOLS` variable in `build.bat` to point to your installed version of `vcvars64.bat`. Make sure you point to the 64-bit version.
 
@@ -14,10 +16,16 @@ Download the Microsoft Detours repo and compile the x64 lib and copy the compile
 
 Running `build.bat` should compile the DLL.
 
-## How to inject
+## How to auto inject
 
-Once DLL has been compiled use a tool such as CFF explorer to add the DLL to the import table of the steamworks dll under the third party binaries in the Guilty Gear Strive folder.
+- Download [CFF explorer](https://ntcore.com/files/CFF_Explorer.zip).
+- Navigate to your steam install folder and go to `\SteamApps\common\GUILTY GEAR STRIVE\Engine\Binaries\ThirdParty\Steamworks\Steamv147\Win64`
+- Make a copy of `steam_api64.dll`
+- Place the `ggs_hook.dll` you either downloaded or built into the same folder
+- Run CFF explorer and open `steam_api64.dll`
+- On the left click on `Import Addr`
+- Click `Add` and select `ggs_hook.dll`
+- Select `dummyExport` and then press the `Import by Name` button
+- Press the `Rebuild Import Table` button and then save the dll
 
-## Further improvements
-
-The `POST` uri `/api/statistics/set` request connections cannot be trivially cached as it causes an R-code upload error
+![CFF explorer import table addition](cff.png)

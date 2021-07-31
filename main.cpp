@@ -10,7 +10,7 @@ extern "C" __declspec(dllexport) void dummyExport()
 }
 
 int connection_counter = 0;
-bool login_state = false;
+bool login_state = true;
 
 typedef HINTERNET (WINAPI* internet_open_w_ptr)(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags);
 internet_open_w_ptr InternetOpenW_original;
@@ -18,16 +18,7 @@ internet_open_w_ptr InternetOpenW_original;
 HINTERNET internet_open_cache;
 
 HINTERNET WINAPI InternetOpenW_hook(LPCWSTR lpszAgent, DWORD dwAccessType, LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)
-{
-    #if 0
-    printf(":::InternetOpenW_hook:::\n");
-    printf("lpszAgent: %ws, ", lpszAgent);
-    printf("dwAccessType: %i, ", dwAccessType);
-    printf("lpszProxy: %ws, ", lpszProxy);
-    printf("lpszProxyBypass: %ws, ", lpszProxyBypass);
-    printf("dwFlags: %i\n", dwFlags);
-    #endif
-    
+{   
     if (login_state)
     {
         if (lstrcmpW(lpszAgent, L"Steam") == 0)
@@ -55,10 +46,6 @@ internet_close_handle_ptr InternetCloseHandle_original;
 
 BOOL InternetCloseHandle_hook(HINTERNET hInternet)
 {
-    #if 0
-    printf(":::InternetCloseHandle:::\n");
-    printf("hInternet: %p\n", hInternet);
-    #endif
     connection_counter++;
     
     if (login_state)
@@ -78,18 +65,6 @@ HINTERNET internet_connect_cache;
 
 HINTERNET WINAPI InternetConnectW_hook(HINTERNET hInternet, LPCWSTR lpszServerName, INTERNET_PORT nServerPort, LPCWSTR lpszUserName, LPCWSTR lpszPassword, DWORD dwService, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    #if 0
-    printf(":::InternetConnectW_hook:::\n");
-    printf("hInternet: %p, ", hInternet);
-    printf("lpszServerName: %ws, ", lpszServerName);
-    printf("nServerPort: %i, ", nServerPort);
-    printf("lpszUserName: %ws, ", lpszUserName);
-    printf("lpszPassword: %ws, ", lpszPassword);
-    printf("dwService: %i, ", dwService);
-    printf("dwFlags: %i, ", dwFlags);
-    printf("dwContext: %lli\n", dwContext);
-    #endif
-
     if (login_state)
     {
         if (lstrcmpW(lpszServerName, L"ggst-game.guiltygear.com") == 0 && nServerPort == 443)
@@ -118,27 +93,24 @@ HINTERNET request_cache_statistics_get;
 HINTERNET request_cache_statistics_set;
 HINTERNET request_cache_catalog_get_replay;
 
+bool statistics_set = false;
+
 HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion, LPCWSTR lpszReferrer, LPCWSTR FAR *lplpszAcceptTypes, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    #if 0
-    printf(":::HttpOpenRequestW_hook:::\n");
-    printf("hConnect: %p, ", hConnect);
-    printf("lpszVerb: %ws, ", lpszVerb);
-    printf("lpszObjectName: %ws, ", lpszObjectName);
-    printf("lpszVersion: %ws, ", lpszVersion);
-    printf("lpszReferrer: %ws, ", lpszReferrer);
-    printf("dwFlags: %i, ", dwFlags);
-    printf("dwContext: %lli\n", dwContext);
-    #endif
-
     if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/user/login") == 0)
     {
         login_state = true; // when quick matching this is triggered again
     }
-    else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/catalog/get_lobby") == 0)
+    else if (lstrcmpW(lpszVerb, L"POST") == 0 && (lstrcmpW(lpszObjectName, L"/api/catalog/get_lobby") == 0 || lstrcmpW(lpszObjectName, L"/api/sys/get_news") == 0))
     {
         login_state = false;
+        request_cache_statistics_get = NULL;
+        request_cache_statistics_set = NULL;
+        request_cache_catalog_get_replay = NULL;
+        printf("\nResuming normal execution\n"); // Should probably unhook
     }
+
+    statistics_set = (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/statistics/set") == 0);
 
     if (login_state)
     {
@@ -151,7 +123,7 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
             }
             else
             {
-                printf("Using http open request cache\n");
+                printf("Using http open request cache for /api/statistics/get\n");
             }
 
             return request_cache_statistics_get;
@@ -159,19 +131,17 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
         
         else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/statistics/set") == 0)
         {
-            // This causes a fail to upload R code error, some of these requests might be ok to cache
-            // if (!request_cache_statistics_set)
-            // {
-            //     printf("Caching http open request for %ws %ws\n", lpszVerb, lpszObjectName);
-            //     request_cache_statistics_set = HttpOpenRequestW_original(hConnect, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, dwContext);
-            // }
-            // else
-            // {
-            //     HttpEndRequestW(request_cache_statistics_set, NULL, 0, 0);
-            //     printf("Using http open request cache\n");
-            // }
+            if (!request_cache_statistics_set)
+            {
+                printf("Caching http open request for %ws %ws\n", lpszVerb, lpszObjectName);
+                request_cache_statistics_set = HttpOpenRequestW_original(hConnect, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, dwContext);
+            }
+            else
+            {
+                printf("Using http open request cache for /api/statistics/set\n");
+            }
 
-            // return request_cache_statistics_set;
+            return request_cache_statistics_set;
         }
         else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/catalog/get_replay") == 0)
         {
@@ -182,15 +152,10 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
             }
             else
             {
-                printf("Using http open request cache\n");
+                printf("Using http open request cache for /api/catalog/get_replay\n");
             }
 
             return request_cache_catalog_get_replay;
-        }
-        else if (lstrcmpW(lpszVerb, L"POST") == 0 && lstrcmpW(lpszObjectName, L"/api/sys/get_news") == 0)
-        {
-            printf("\nResuming normal execution\n"); // Should probably unhook
-            login_state = false;
         }
     }
 
@@ -203,8 +168,24 @@ http_send_request_ptr HttpSendRequestW_original;
 
 BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
 {
-    printf("Send http request, headers(size:%i): %ws optional(size:%i)\n", dwHeadersLength, lpszHeaders, dwOptionalLength);
+    if (statistics_set)
+    {
+        // Subsequent calls to HttpSendRequest don't adjust the content-length header for the same HttpOpenRequest handle (not documented on msdn!)
+        wchar_t header[256];
+        swprintf(header, sizeof(header) / sizeof(*header), L"Content-Length: %d\r\n", dwOptionalLength);
+        HttpAddRequestHeadersW(request_cache_statistics_set, &header[0], -1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
+    }
+
+    printf("Send http request, optional(size:%i)\n", dwOptionalLength);
     return HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
+}
+
+typedef BOOL (WINAPI* http_query_info_ptr)(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex);
+http_query_info_ptr HttpQueryInfoW_original;
+
+BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
+{
+    return HttpQueryInfoW_original(hRequest, dwInfoLevel, lpBuffer, lpdwBufferLength, lpdwIndex);
 }
 
 typedef BOOL (WINAPI* internet_read_file_ptr)(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead, LPDWORD lpdwNumberOfBytesRead);
@@ -214,16 +195,10 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
 {
     BOOL result = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
 
-    #if 0
-    unsigned char* buffer = (unsigned char*)lpBuffer;
-
-    printf("Read file buffer(%i):\n", *lpdwNumberOfBytesRead);
-    for (DWORD i = 0; i < *lpdwNumberOfBytesRead; ++i)
+    if ((*lpdwNumberOfBytesRead == dwNumberOfBytesToRead) && dwNumberOfBytesToRead> 0)
     {
-        printf("%02hhX ", (buffer + i));
+        printf("Http response(size:%i)\n", dwNumberOfBytesToRead);
     }
-    printf("\n");
-    #endif
     
     return result;
 }
@@ -298,6 +273,12 @@ BOOL hook()
 
     HttpSendRequestW_original = &HttpSendRequestW;
     if (!apply_hook((PVOID*)&HttpSendRequestW_original, (PVOID)HttpSendRequestW_hook, "HttpSendRequestW"))
+    {
+        return FALSE;
+    }
+
+    HttpQueryInfoW_original = &HttpQueryInfoW;
+    if (!apply_hook((PVOID*)&HttpQueryInfoW_original, (PVOID)HttpQueryInfoW_hook, "HttpQueryInfoW"))
     {
         return FALSE;
     }
