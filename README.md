@@ -1,10 +1,10 @@
 # Guilty Gear Strive Client Hook
 
-Decreases the time taken to get to the main menu and start quick match. Unlike other solutions this is resilient to client version updates (unless they overhaul their network handling or modify their api endpoints) and does not requrie you to run a proxy application.
+Decreases the time all http network operations take. Unlike other solutions this is resilient to client version updates (unless they overhaul their network handling or modify their api endpoints) and does not requrie you to run a proxy application.
 
 # How this works
 
-By caching handles and requests the client makes. This means tls/tcp initialisation packets are no longer sent (except for when a new api call is made)
+By caching handles and requests the client makes. This means tls/tcp initialisation packets are no longer sent for every request
 
 ## How to get
 
