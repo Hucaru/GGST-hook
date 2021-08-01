@@ -1,6 +1,6 @@
 # Guilty Gear Strive Client Hook
 
-Decreases the time all http network operations take. Unlike other solutions this is resilient to client version updates (unless they overhaul their network handling or modify their api endpoints) and does not requrie you to run a proxy application.
+Decreases the time all http network operations take. Unlike other solutions this is resilient to client version updates (unless they overhaul their networking) and does not requrie you to run a proxy application.
 
 # How this works
 
