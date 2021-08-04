@@ -85,15 +85,6 @@ BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHead
     return HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
 }
 
-typedef BOOL (WINAPI* is_debugger_present_ptr)();
-is_debugger_present_ptr IsDebuggerPresent_original;
-
-BOOL IsDebuggerPresent_hook()
-{
-    printf("IsDebuggerPresent called\n");
-    return FALSE;
-}
-
 BOOL apply_hook(__inout PVOID* ppvTarget, __in PVOID pvDetour, char* name)
 {
     printf("Hooking %s....", name);
@@ -155,12 +146,6 @@ BOOL hook()
 
     HttpSendRequestW_original = &HttpSendRequestW;
     if (!apply_hook((PVOID*)&HttpSendRequestW_original, (PVOID)HttpSendRequestW_hook, "HttpSendRequestW"))
-    {
-        return FALSE;
-    }
-
-    IsDebuggerPresent_original = &IsDebuggerPresent;
-    if (!apply_hook((PVOID*)&IsDebuggerPresent_original, (PVOID)IsDebuggerPresent_hook, "IsDebuggerPresent"))
     {
         return FALSE;
     }
