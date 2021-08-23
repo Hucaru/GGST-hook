@@ -6,6 +6,9 @@ Decreases the time all http network operations take. Unlike other solutions this
 
 By caching handles and requests the client makes. This means tls/tcp initialisation packets are no longer sent for every request
 
+# Acknowledgements
+[Totsugeki](https://github.com/optix2000/totsugeki) for the pre-fetch idea
+
 ## How to get
 
 Download the latest release, or alternatively build from source:
