@@ -105,11 +105,8 @@ struct connection_context
 {
     int request_id;
     HANDLE request_sent;
-    HANDLE data_available;
-    HANDLE headers_available;
     HANDLE read_complete;
     DWORD timeout;
-    DWORD read_amount;
     HINTERNET request_handle;
     std::string request_payload;
     std::string read_buffer;
