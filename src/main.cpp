@@ -266,8 +266,35 @@ BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHead
 
 BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
-    // if (stats_set || ( (stats_get || follow_get) && login_state))
-    // {
+    if (login_state)
+    {
+        auto end_point = results_lookup.find(current_request);
+
+        if (end_point != results_lookup.end())
+        {
+            auto count = request_count.find(current_request);
+
+            if (count != request_count.end())
+            {
+                auto response = end_point->second.find(count->second);
+
+                if (response != end_point->second.end())
+                {
+                    char* tmp = (char*)lpBuffer;
+                    // No idea what this means, but the client is happy as long as it receives this
+                    tmp[0] = 0xc8;
+                    tmp[1] = 0x00;
+                    tmp[2] = 0x00;
+                    tmp[3] = 0x00;
+
+                    return TRUE;
+                }
+            }
+        }
+    }
+    
+    if (stats_set || ( (stats_get || follow_get) && login_state))
+    {
         char* tmp = (char*)lpBuffer;
         // No idea what this means, but the client is happy as long as it receives this
         tmp[0] = 0xc8;
@@ -276,9 +303,9 @@ BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer,
         tmp[3] = 0x00;
 
         return TRUE;
-    // }
+    }
 
-    // return HttpQueryInfoW_original(hRequest, dwInfoLevel, lpBuffer, lpdwBufferLength, lpdwIndex);
+    return HttpQueryInfoW_original(hRequest, dwInfoLevel, lpBuffer, lpdwBufferLength, lpdwIndex);
 }
 
 struct stat_set_response
@@ -366,12 +393,7 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
                     *lpdwNumberOfBytesRead = response->second.size();
                     return TRUE;
                 }
-                else
-                {
-                    printf("Failed to find payload for %ws with index\n", current_request.c_str(), count->second);
-                }
             }
-            printf("Failed to find count for %ws\n", current_request.c_str());
         }
     }
 

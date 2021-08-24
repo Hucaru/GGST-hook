@@ -107,7 +107,6 @@ std::unordered_map<std::wstring, std::vector<std::string>> aobs = {
 
 static std::string generate_request(std::string& token, std::string& aob)
 {
-                                                      // old was 0396
     return "data=9295" + token + "02a5"+"302e302e35" + "03" + aob + "\x00";
 }
 
