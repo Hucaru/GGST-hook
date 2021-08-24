@@ -41,6 +41,7 @@ internet_read_file_ptr InternetReadFile_original;
 typedef BOOL (WINAPI* is_debugger_present_ptr)();
 is_debugger_present_ptr IsDebuggerPresent_original;
 
+bool prefetch = true;
 bool stats_set;
 bool stats_get;
 bool login_state;
@@ -50,11 +51,6 @@ bool follow_get;
 bool replay_get;
 bool vip_status;
 bool item_get;
-
-int stats_set_count = 0;
-int stats_get_count = -1;
-
-bool prefetch = true;
 
 std::string login_result;
 
@@ -291,6 +287,14 @@ stat_set_response generate_stat_set_response()
 int count = 0;
 BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead, LPDWORD lpdwNumberOfBytesRead)
 {
+    count++;
+
+    if (count % 2 == 0)
+    {
+        *lpdwNumberOfBytesRead = 0;
+        return TRUE;
+    }
+
     if (login_state && login_result.empty())
     {
         auto r = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
@@ -301,14 +305,9 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
 
     if (login_state && stats_set)
     {
-        if (stats_set_count % 2 == 0)
-        {
-            auto r = generate_stat_set_response();
-            memcpy(lpBuffer, &r, sizeof(stat_set_response));
-            printf("Using fabricated server response\n");
-        }
-
-        stats_set_count++;
+        auto r = generate_stat_set_response();
+        memcpy(lpBuffer, &r, sizeof(stat_set_response));
+        printf("Using fabricated server response\n");
         return TRUE;
     }
 
@@ -318,14 +317,6 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
 
         if (end_point != results_lookup.end())
         {
-            count++;
-
-            if (count % 2 == 0)
-            {
-                *lpdwNumberOfBytesRead = 0;
-                return TRUE;
-            }
-
             auto count = request_count.find(current_request);
 
             if (count != request_count.end())
