@@ -1,16 +1,13 @@
 # Guilty Gear Strive Client Hook
-
-Decreases the time all http network operations take. Unlike other solutions this is resilient to client version updates (unless they overhaul their networking) and does not requrie you to run a proxy application.
+Decreases the time all http network operations take.This is resilient to client version updates (unless they overhaul their networking) and does not requrie you to run a proxy application.
 
 # How this works
-
 By caching handles and requests the client makes. This means tls/tcp initialisation packets are no longer sent for every request
 
 # Acknowledgements
 [Totsugeki](https://github.com/optix2000/totsugeki) for the pre-fetch idea
 
 ## How to get
-
 Download the latest release, or alternatively build from source:
 
 Make sure visual studio is installed and edit the `VSTOOLS` variable in `build.bat` to point to your installed version of `vcvars64.bat`. Make sure you point to the 64-bit version.
