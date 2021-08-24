@@ -108,8 +108,6 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
     {
         login_state = false;
     }
-
-    stats_set = wcscmp(lpszObjectName, L"/api/statistics/set") == 0;
     
     if (wcscmp(lpszObjectName, L"/api/statistics/get") == 0)
     {
@@ -126,59 +124,13 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
         stats_get = false;
     }
 
-    if (wcscmp(lpszObjectName, L"/api/tus/write") == 0)
-    {
-        tus_write = true;
-    }
-    else
-    {
-        tus_write = false;
-    }
-    
-    if (wcscmp(lpszObjectName, L"/api/catalog/get_block") == 0)
-    {
-        block_get = true;
-    }
-    else
-    {
-        block_get = false;
-    }
-
-    if (wcscmp(lpszObjectName, L"/api/catalog/get_follow") == 0)
-    {
-        follow_get = true;
-    }
-    else
-    {
-        follow_get = false;
-    }
-
-    if (wcscmp(lpszObjectName, L"/api/catalog/get_replay") == 0)
-    {
-        replay_get = true;
-    }
-    else
-    {
-        replay_get = false;
-    }
-
-    if (wcscmp(lpszObjectName, L"/api/lobby/get_vip_status") == 0)
-    {
-        vip_status = true;
-    }
-    else
-    {
-        vip_status = false;
-    }
-
-    if (wcscmp(lpszObjectName, L"/api/item/get_item") == 0)
-    {
-        item_get = true;
-    }
-    else
-    {
-        item_get = false;
-    }
+    stats_set = wcscmp(lpszObjectName, L"/api/statistics/set") == 0;
+    tus_write = wcscmp(lpszObjectName, L"/api/tus/write") == 0 ? true : false;
+    block_get = wcscmp(lpszObjectName, L"/api/catalog/get_block") == 0 ? true : false;
+    follow_get = wcscmp(lpszObjectName, L"/api/catalog/get_follow") == 0 ? true : false;
+    replay_get = wcscmp(lpszObjectName, L"/api/catalog/get_replay") == 0 ? true : false;
+    vip_status = wcscmp(lpszObjectName, L"/api/lobby/get_vip_status") == 0 ? true : false;
+    item_get = wcscmp(lpszObjectName, L"/api/item/get_item") == 0 ? true : false;
 
     current_request = lpszObjectName;
 
@@ -219,7 +171,6 @@ void send_request(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength
     HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
 }
 
-#include <iostream>
 BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
 {
     if (stats_set || tus_write)
@@ -228,11 +179,6 @@ BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHead
         sender.detach();
         return TRUE;
     }
-
-    // if (item_get)
-    // {
-    //     std::cout << std::string((char*)lpOptional, dwOptionalLength) << "\n\n";
-    // }
 
     if (login_state)
     {
@@ -292,7 +238,7 @@ BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer,
             }
         }
     }
-    
+
     if (stats_set || ( (stats_get || follow_get) && login_state))
     {
         char* tmp = (char*)lpBuffer;
