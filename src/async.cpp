@@ -5,109 +5,121 @@
 #include <thread>
 #include <unordered_map>
 
-std::vector<std::string> ggs_get_aobs = {
-    {"a007ffffffff"},
-    {"a009ffffffff"},
-    {"a008ff00ffff"},
-    {"a008ff01ffff"},
-    {"a008ff02ffff"},
-    {"a008ff03ffff"},
-    {"a008ff04ffff"},
-    {"a008ff05ffff"},
-    {"a008ff06ffff"},
-    {"a008ff07ffff"},
-    {"a008ff08ffff"},
-    {"a008ff09ffff"},
-    {"a008ff0affff"},
-    {"a008ff0bffff"},
-    {"a008ff0cffff"},
-    {"a008ff0dffff"},
-    {"a008ff0effff"},
-    {"a008ff0fffff"},
-    {"a008ffffffff"},
-    {"a006ff00ffff"},
-    {"a006ff01ffff"},
-    {"a006ff02ffff"},
-    {"a006ff03ffff"},
-    {"a006ff04ffff"},
-    {"a006ff05ffff"},
-    {"a006ff06ffff"},
-    {"a006ff07ffff"},
-    {"a006ff08ffff"},
-    {"a006ff09ffff"},
-    {"a006ff0affff"},
-    {"a006ff0bffff"},
-    {"a006ff0cffff"},
-    {"a006ff0dffff"},
-    {"a006ff0effff"},
-    {"a006ff0fffff"},
-    {"a006ffffffff"},
-    {"a005ffffffff"},
-    {"a0020100ffff"},
-    {"a0020101ffff"},
-    {"a0020102ffff"},
-    {"a0020103ffff"},
-    {"a0020104ffff"},
-    {"a0020105ffff"},
-    {"a0020106ffff"},
-    {"a0020107ffff"},
-    {"a0020108ffff"},
-    {"a0020109ffff"},
-    {"a002010affff"},
-    {"a002010bffff"},
-    {"a002010cffff"},
-    {"a002010dffff"},
-    {"a002010effff"},
-    {"a002010fffff"},
-    {"a00201ffffff"},
-    {"a0010100feff"},
-    {"a0010100ffff"},
-    {"a0010101feff"},
-    {"a0010101ffff"},
-    {"a0010102feff"},
-    {"a0010102ffff"},
-    {"a0010103feff"},
-    {"a0010103ffff"},
-    {"a0010104feff"},
-    {"a0010104ffff"},
-    {"a0010105feff"},
-    {"a0010105ffff"},
-    {"a0010106feff"},
-    {"a0010106ffff"},
-    {"a0010107feff"},
-    {"a0010107ffff"},
-    {"a0010108feff"},
-    {"a0010108ffff"},
-    {"a0010109feff"},
-    {"a0010109ffff"},
-    {"a001010afeff"},
-    {"a001010affff"},
-    {"a001010bfeff"},
-    {"a001010bffff"},
-    {"a001010cfeff"},
-    {"a001010cffff"},
-    {"a001010dfeff"},
-    {"a001010dffff"},
-    {"a001010efeff"},
-    {"a001010effff"},
-    {"a001010ffeff"},
-    {"a001010fffff"},
-    {"a00101fffeff"},
-    {"a00101ffffff"},
+std::vector<std::string> ggs_status_get_aobs = {
+    {"96a007ffffffff"},
+    {"96a009ffffffff"},
+    {"96a008ff00ffff"},
+    {"96a008ff01ffff"},
+    {"96a008ff02ffff"},
+    {"96a008ff03ffff"},
+    {"96a008ff04ffff"},
+    {"96a008ff05ffff"},
+    {"96a008ff06ffff"},
+    {"96a008ff07ffff"},
+    {"96a008ff08ffff"},
+    {"96a008ff09ffff"},
+    {"96a008ff0affff"},
+    {"96a008ff0bffff"},
+    {"96a008ff0cffff"},
+    {"96a008ff0dffff"},
+    {"96a008ff0effff"},
+    {"96a008ff0fffff"},
+    {"96a008ffffffff"},
+    {"96a006ff00ffff"},
+    {"96a006ff01ffff"},
+    {"96a006ff02ffff"},
+    {"96a006ff03ffff"},
+    {"96a006ff04ffff"},
+    {"96a006ff05ffff"},
+    {"96a006ff06ffff"},
+    {"96a006ff07ffff"},
+    {"96a006ff08ffff"},
+    {"96a006ff09ffff"},
+    {"96a006ff0affff"},
+    {"96a006ff0bffff"},
+    {"96a006ff0cffff"},
+    {"96a006ff0dffff"},
+    {"96a006ff0effff"},
+    {"96a006ff0fffff"},
+    {"96a006ffffffff"},
+    {"96a005ffffffff"},
+    {"96a0020100ffff"},
+    {"96a0020101ffff"},
+    {"96a0020102ffff"},
+    {"96a0020103ffff"},
+    {"96a0020104ffff"},
+    {"96a0020105ffff"},
+    {"96a0020106ffff"},
+    {"96a0020107ffff"},
+    {"96a0020108ffff"},
+    {"96a0020109ffff"},
+    {"96a002010affff"},
+    {"96a002010bffff"},
+    {"96a002010cffff"},
+    {"96a002010dffff"},
+    {"96a002010effff"},
+    {"96a002010fffff"},
+    {"96a00201ffffff"},
+    {"96a0010100feff"},
+    {"96a0010100ffff"},
+    {"96a0010101feff"},
+    {"96a0010101ffff"},
+    {"96a0010102feff"},
+    {"96a0010102ffff"},
+    {"96a0010103feff"},
+    {"96a0010103ffff"},
+    {"96a0010104feff"},
+    {"96a0010104ffff"},
+    {"96a0010105feff"},
+    {"96a0010105ffff"},
+    {"96a0010106feff"},
+    {"96a0010106ffff"},
+    {"96a0010107feff"},
+    {"96a0010107ffff"},
+    {"96a0010108feff"},
+    {"96a0010108ffff"},
+    {"96a0010109feff"},
+    {"96a0010109ffff"},
+    {"96a001010afeff"},
+    {"96a001010affff"},
+    {"96a001010bfeff"},
+    {"96a001010bffff"},
+    {"96a001010cfeff"},
+    {"96a001010cffff"},
+    {"96a001010dfeff"},
+    {"96a001010dffff"},
+    {"96a001010efeff"},
+    {"96a001010effff"},
+    {"96a001010ffeff"},
+    {"96a001010fffff"},
+    {"96a00101fffeff"},
+    {"96a00101ffffff"},
 };
 
-static std::string generate_stat_get_request(std::string& token, std::string& get_aob)
+std::unordered_map<std::wstring, std::vector<std::string>> aobs = {
+    {L"/api/statistics/get", ggs_status_get_aobs},
+    {L"/api/catalog/get_block", std::vector<std::string>{"920101"}},
+    {L"/api/catalog/get_follow", std::vector<std::string>{"93000101"}},
+    {L"/api/lobby/get_vip_status", std::vector<std::string>{"91a0"}},
+    {L"/api/item/get_item", std::vector<std::string>{"9105"}},
+    {L"/api/catalog/get_replay", std::vector<std::string>{"940100059aff000963900c0e010001", "940100059aff000963900c01010001", "940100059aff000963900c0c020001"}},
+};
+
+static std::string generate_request(std::string& token, std::string& aob)
 {
-    return "data=9295" + token + "02a5"+"302e302e35" + "0396" + get_aob + "\x00";
+                                                      // old was 0396
+    return "data=9295" + token + "02a5"+"302e302e35" + "03" + aob + "\x00";
 }
 
 struct connection_context
 {
     int request_id;
+    int end_point_id;
     HANDLE request_sent;
     HANDLE read_complete;
     DWORD timeout;
     HINTERNET request_handle;
+    std::wstring end_point;
     std::string request_payload;
     std::string read_buffer;
     std::string response_payload;
@@ -200,7 +212,14 @@ void async_callback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetSt
     }
 }
 
-void fetch_status(std::string login_result, LPCWSTR pswzServerName, WORD port, LPCWSTR lpszVersion, LPCWSTR lpszReferrer, LPCWSTR* lplpszAcceptTypes, DWORD dwFlags, std::unordered_map<int, std::string>* results)
+void prefetch_requests(std::string login_result, 
+    LPCWSTR pswzServerName, 
+    WORD port, 
+    LPCWSTR lpszVersion, 
+    LPCWSTR lpszReferrer, 
+    LPCWSTR* lplpszAcceptTypes, 
+    DWORD dwFlags, 
+    std::unordered_map<std::wstring, std::unordered_map<int, std::string>>* results)
 {
     printf("Async pre-fetch started\n");
 
@@ -223,74 +242,110 @@ void fetch_status(std::string login_result, LPCWSTR pswzServerName, WORD port, L
         return;
     }
 
-    std::vector<connection_context> contexts;
-    contexts.reserve(ggs_get_aobs.size());
+    
 
     std::string token = login_result.substr(60, 19) + login_result.substr(2, 14);
     token = to_hex(token);
 
-    for (auto i = 0; i < ggs_get_aobs.size(); i++)
+    auto context_size = 0;
+
+    for (auto& end_points : aobs)
     {
-        connection_context ctx;
-        contexts.push_back(ctx);
-        contexts.back().request_id = i;
-        contexts.back().read_complete = CreateEvent(NULL, FALSE, FALSE, NULL);
-        contexts.back().timeout = 5000; // 5 seconds
-        contexts.back().request_payload = generate_stat_get_request(token, ggs_get_aobs[i]);
-        contexts.back().request_handle = WinHttpOpenRequest(connect, L"POST", L"/api/statistics/get", NULL, WINHTTP_NO_REFERER, lplpszAcceptTypes, WINHTTP_FLAG_SECURE);
+        context_size += end_points.second.size();
+    }
 
-        if (!contexts.back().request_handle)
+    printf("Creating %d contexts\n", context_size);
+    std::vector<connection_context> contexts;
+    contexts.reserve(context_size);
+
+    auto i = 0;
+    for (auto& end_points : aobs)
+    {
+        printf("Working on: %ws\n", end_points.first.c_str());
+        auto j = 0;
+
+        for (auto& payload : end_points.second)
         {
-            printf("Failed to open request\n");
-            continue;
-        }
+            connection_context ctx;
+            ctx.request_id = i;
+            ctx.end_point_id = j;
+            ctx.read_complete = CreateEvent(NULL, FALSE, FALSE, NULL);
+            ctx.timeout = 5000; // 5 seconds
+            ctx.request_payload = generate_request(token, payload);
+            ctx.end_point = end_points.first;
+            ctx.request_handle = WinHttpOpenRequest(connect, L"POST", end_points.first.c_str(), NULL, WINHTTP_NO_REFERER, lplpszAcceptTypes, WINHTTP_FLAG_SECURE);
 
-        int headers_added = 0;
+            if (!ctx.request_handle)
+            {
+                printf("Failed to open request\n");
+                continue;
+            }
 
-        if(WinHttpAddRequestHeaders(contexts.back().request_handle, L"Connection: keep-alive\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
-        {
-            headers_added++;
-        }
+            int headers_added = 0;
 
-        if(WinHttpAddRequestHeaders(contexts.back().request_handle, L"Content-Type: application/x-www-form-urlencoded\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
-        {
-            headers_added++;
-        }
+            if(WinHttpAddRequestHeaders(ctx.request_handle, L"Connection: keep-alive\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
+            {
+                headers_added++;
+            }
 
-        if(WinHttpAddRequestHeaders(contexts.back().request_handle, L"Cache-Control: no-cache\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
-        {
-            headers_added++;
-        }
+            if(WinHttpAddRequestHeaders(ctx.request_handle, L"Content-Type: application/x-www-form-urlencoded\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
+            {
+                headers_added++;
+            }
 
-        if(WinHttpAddRequestHeaders(contexts.back().request_handle, L"Cookie: theme=theme-dark\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
-        {
-            headers_added++;
-        }
+            if(WinHttpAddRequestHeaders(ctx.request_handle, L"Cache-Control: no-cache\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
+            {
+                headers_added++;
+            }
 
-        if (WinHttpAddRequestHeaders(contexts.back().request_handle, L"User-Agent: Steam\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
-        {
-            headers_added++;
-        }
+            if(WinHttpAddRequestHeaders(ctx.request_handle, L"Cookie: theme=theme-dark\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
+            {
+                headers_added++;
+            }
 
-        if (headers_added < 5)
-        {
-            printf("Failed to add headers\n");
-            continue;
-        }
+            if (WinHttpAddRequestHeaders(ctx.request_handle, L"User-Agent: Steam\r\n", -1L, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE))
+            {
+                headers_added++;
+            }
 
-        if(!WinHttpSendRequest(contexts.back().request_handle, WINHTTP_NO_ADDITIONAL_HEADERS, -1L, 
-            &contexts.back().request_payload[0], contexts.back().request_payload.size() + 1, contexts.back().request_payload.size() + 1, (DWORD_PTR)&contexts.back()))
-        {
-            printf("Failed to send request\n");
-            continue;
+            if (headers_added < 5)
+            {
+                printf("Failed to add headers\n");
+                continue;
+            }
+
+            contexts.push_back(ctx);
+
+            if(!WinHttpSendRequest(ctx.request_handle, 
+                WINHTTP_NO_ADDITIONAL_HEADERS, -1L, 
+                &contexts.back().request_payload[0], 
+                contexts.back().request_payload.size() + 1, 
+                contexts.back().request_payload.size() + 1, (DWORD_PTR)&contexts.back()))
+            {
+                printf("Failed to send request\n");
+                continue;
+            }
+            
+            j++;
+            i++;
         }
     }
 
-    for (auto i = 0; i < contexts.size(); i++)
+    for (auto& ctx : contexts)
     {
-        WaitForSingleObject(contexts[i].read_complete, contexts[i].timeout);
-        WinHttpCloseHandle(contexts[i].request_handle);
-        results->insert({contexts[i].request_id, contexts[i].response_payload});
+        WaitForSingleObject(ctx.read_complete, ctx.timeout);
+        WinHttpCloseHandle(ctx.request_handle);
+
+        auto ep = results->find(ctx.end_point);
+
+        if (ep == results->end())
+        {
+            results->insert({ctx.end_point, std::unordered_map<int, std::string>{{ctx.end_point_id, ctx.response_payload}}});
+        }
+        else
+        {
+            ep->second.insert({ctx.end_point_id, ctx.response_payload});
+        }
     }
 
     WinHttpCloseHandle(connect);

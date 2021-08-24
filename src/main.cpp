@@ -45,6 +45,11 @@ bool stats_set;
 bool stats_get;
 bool login_state;
 bool tus_write;
+bool block_get;
+bool follow_get;
+bool replay_get;
+bool vip_status;
+bool item_get;
 
 int stats_set_count = 0;
 int stats_get_count = -1;
@@ -54,7 +59,10 @@ bool prefetch = true;
 std::string login_result;
 
 std::unordered_map<std::wstring, HINTERNET> request_lookup;
-std::unordered_map<int, std::string> stats_get_result_lookup;
+std::unordered_map<std::wstring, std::unordered_map<int, std::string>> results_lookup;
+
+std::wstring current_request;
+std::unordered_map<std::wstring, int> request_count;
 
 HINTERNET internet_open_cache;
 HINTERNET internet_connect_cache;
@@ -109,7 +117,7 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
 
         if (login_state && prefetch)
         {
-            fetch_status(login_result, server_name.c_str(), server_port, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, &stats_get_result_lookup);
+            prefetch_requests(login_result, server_name.c_str(), server_port, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, &results_lookup);
             prefetch = false;
         }
     }
@@ -126,15 +134,72 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
     {
         tus_write = false;
     }
+    
+    if (wcscmp(lpszObjectName, L"/api/catalog/get_block") == 0)
+    {
+        block_get = true;
+    }
+    else
+    {
+        block_get = false;
+    }
 
-    auto key = std::wstring(lpszObjectName);
-    auto lookup = request_lookup.find(key);
+    if (wcscmp(lpszObjectName, L"/api/catalog/get_follow") == 0)
+    {
+        follow_get = true;
+    }
+    else
+    {
+        follow_get = false;
+    }
+
+    if (wcscmp(lpszObjectName, L"/api/catalog/get_replay") == 0)
+    {
+        replay_get = true;
+    }
+    else
+    {
+        replay_get = false;
+    }
+
+    if (wcscmp(lpszObjectName, L"/api/lobby/get_vip_status") == 0)
+    {
+        vip_status = true;
+    }
+    else
+    {
+        vip_status = false;
+    }
+
+    if (wcscmp(lpszObjectName, L"/api/item/get_item") == 0)
+    {
+        item_get = true;
+    }
+    else
+    {
+        item_get = false;
+    }
+
+    current_request = lpszObjectName;
+
+    auto rc = request_count.find(lpszObjectName);
+
+    if (rc == request_count.end())
+    {
+        request_count.insert({lpszObjectName, 0});
+    }
+    else
+    {
+        rc->second++;
+    }
+
+    auto lookup = request_lookup.find(current_request);
 
     if (lookup == request_lookup.end())
     {
         printf("Caching: %ws\n", lpszObjectName);
         auto handle = HttpOpenRequestW_original(hConnect, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, dwContext);
-        request_lookup[key] = handle;
+        request_lookup[current_request] = handle;
         return handle;
     }
 
@@ -154,6 +219,7 @@ void send_request(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength
     HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
 }
 
+#include <iostream>
 BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
 {
     if (stats_set || tus_write)
@@ -163,14 +229,28 @@ BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHead
         return TRUE;
     }
 
-    if (stats_get && login_state)
-    {
-        stats_get_count++;
-        auto response = stats_get_result_lookup.find(stats_get_count);
+    // if (item_get)
+    // {
+    //     std::cout << std::string((char*)lpOptional, dwOptionalLength) << "\n\n";
+    // }
 
-        if (response != stats_get_result_lookup.end())
+    if (login_state)
+    {
+        auto end_point = results_lookup.find(current_request);
+
+        if (end_point != results_lookup.end())
         {
-            return TRUE;
+            auto count = request_count.find(current_request);
+
+            if (count != request_count.end())
+            {
+                auto response = end_point->second.find(count->second);
+
+                if (response != end_point->second.end())
+                {
+                    return TRUE;
+                }
+            }    
         }
     }
 
@@ -186,8 +266,8 @@ BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHead
 
 BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
-    if (stats_set || (stats_get && login_state))
-    {
+    // if (stats_set || ( (stats_get || follow_get) && login_state))
+    // {
         char* tmp = (char*)lpBuffer;
         // No idea what this means, but the client is happy as long as it receives this
         tmp[0] = 0xc8;
@@ -196,9 +276,9 @@ BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer,
         tmp[3] = 0x00;
 
         return TRUE;
-    }
+    // }
 
-    return HttpQueryInfoW_original(hRequest, dwInfoLevel, lpBuffer, lpdwBufferLength, lpdwIndex);
+    // return HttpQueryInfoW_original(hRequest, dwInfoLevel, lpBuffer, lpdwBufferLength, lpdwIndex);
 }
 
 struct stat_set_response
@@ -235,8 +315,7 @@ stat_set_response generate_stat_set_response()
     return r;
 }
 
-#include <iostream>
-int count = -1;
+int count = 0;
 BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfBytesToRead, LPDWORD lpdwNumberOfBytesRead)
 {
     if (login_state && login_result.empty())
@@ -247,37 +326,7 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
         return r;
     }
 
-    if (stats_get && login_state)
-    {
-        count++;
-        if (stats_get_result_lookup.find(stats_get_count) == stats_get_result_lookup.end())
-        {
-            printf("No cached result %d\n", stats_get_count);
-        }
-        else if (count % 2 != 0)
-        {
-            *lpdwNumberOfBytesRead = 0;
-            return TRUE;
-        }
-        else
-        {
-            auto response = stats_get_result_lookup.find(stats_get_count);
-
-            if (response == stats_get_result_lookup.end())
-            {
-                return InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
-            }
-            else
-            {
-                // Client most likely frees this buffer at some point so best copy it to be safe
-                memcpy(lpBuffer, &response->second[0], response->second.size());
-                *lpdwNumberOfBytesRead = response->second.size();
-                return TRUE;
-            }
-        }
-    }
-
-    if (stats_set)
+    if (login_state && stats_set)
     {
         if (stats_set_count % 2 == 0)
         {
@@ -288,6 +337,42 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
 
         stats_set_count++;
         return TRUE;
+    }
+
+    if (login_state)
+    {
+        auto end_point = results_lookup.find(current_request);
+
+        if (end_point != results_lookup.end())
+        {
+            count++;
+
+            if (count % 2 == 0)
+            {
+                *lpdwNumberOfBytesRead = 0;
+                return TRUE;
+            }
+
+            auto count = request_count.find(current_request);
+
+            if (count != request_count.end())
+            {
+                auto response = end_point->second.find(count->second);
+
+                if (response != end_point->second.end())
+                {
+                    // Client most likely frees this buffer at some point so best copy it to be safe
+                    memcpy(lpBuffer, &response->second[0], response->second.size());
+                    *lpdwNumberOfBytesRead = response->second.size();
+                    return TRUE;
+                }
+                else
+                {
+                    printf("Failed to find payload for %ws with index\n", current_request.c_str(), count->second);
+                }
+            }
+            printf("Failed to find count for %ws\n", current_request.c_str());
+        }
     }
 
     return InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
