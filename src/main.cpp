@@ -220,8 +220,7 @@ BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer,
         if (stats_set || stats_get || follow_get)
         {
             char* tmp = (char*)lpBuffer;
-            // No idea what this means, but the client is happy as long as it receives this
-            tmp[0] = 0xc8;
+            tmp[0] = 0xc8; // http status code: 200
             tmp[1] = 0x00;
             tmp[2] = 0x00;
             tmp[3] = 0x00;
@@ -242,8 +241,7 @@ BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer,
                 if (response != end_point->second.end())
                 {
                     char* tmp = (char*)lpBuffer;
-                    // No idea what this means, but the client is happy as long as it receives this
-                    tmp[0] = 0xc8;
+                    tmp[0] = 0xc8; // http status code: 200
                     tmp[1] = 0x00;
                     tmp[2] = 0x00;
                     tmp[3] = 0x00;
