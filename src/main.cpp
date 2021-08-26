@@ -51,6 +51,7 @@ bool follow_get;
 bool replay_get;
 bool vip_status;
 bool item_get;
+bool env_get;
 
 std::string login_result;
 
@@ -132,6 +133,7 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
     replay_get = wcscmp(lpszObjectName, L"/api/catalog/get_replay") == 0 ? true : false;
     vip_status = wcscmp(lpszObjectName, L"/api/lobby/get_vip_status") == 0 ? true : false;
     item_get = wcscmp(lpszObjectName, L"/api/item/get_item") == 0 ? true : false;
+    env_get = wcscmp(lpszObjectName, L"/api/sys/get_env") == 0 ? true : false;
 
     current_request = lpszObjectName;
 
@@ -174,15 +176,15 @@ void send_request(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength
 
 BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
 {
-    if (stats_set || tus_write)
-    {
-        std::thread sender(send_request, hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
-        sender.detach();
-        return TRUE;
-    }
-
     if (login_state)
     {
+        if (stats_set || tus_write)
+        {
+            std::thread sender(send_request, hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
+            sender.detach();
+            return TRUE;
+        }
+
         auto end_point = results_lookup.find(current_request);
 
         if (end_point != results_lookup.end())
@@ -215,6 +217,18 @@ BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer,
 {
     if (login_state)
     {
+        if (stats_set || stats_get || follow_get)
+        {
+            char* tmp = (char*)lpBuffer;
+            // No idea what this means, but the client is happy as long as it receives this
+            tmp[0] = 0xc8;
+            tmp[1] = 0x00;
+            tmp[2] = 0x00;
+            tmp[3] = 0x00;
+
+            return TRUE;
+        }
+
         auto end_point = results_lookup.find(current_request);
 
         if (end_point != results_lookup.end())
@@ -238,18 +252,6 @@ BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer,
                 }
             }
         }
-    }
-
-    if (stats_set || ( (stats_get || follow_get) && login_state))
-    {
-        char* tmp = (char*)lpBuffer;
-        // No idea what this means, but the client is happy as long as it receives this
-        tmp[0] = 0xc8;
-        tmp[1] = 0x00;
-        tmp[2] = 0x00;
-        tmp[3] = 0x00;
-
-        return TRUE;
     }
 
     return HttpQueryInfoW_original(hRequest, dwInfoLevel, lpBuffer, lpdwBufferLength, lpdwIndex);
@@ -300,24 +302,24 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
         return TRUE;
     }
 
-    if (login_state && login_result.empty())
-    {
-        auto r = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
-        login_result.resize(*lpdwNumberOfBytesRead);
-        memcpy(&login_result[0], lpBuffer, *lpdwNumberOfBytesRead);
-        return r;
-    }
-
-    if (login_state && stats_set)
-    {
-        auto r = generate_stat_set_response();
-        memcpy(lpBuffer, &r, sizeof(stat_set_response));
-        printf("Using fabricated server response\n");
-        return TRUE;
-    }
-
     if (login_state)
     {
+        if (login_result.empty())
+        {
+            auto r = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
+            login_result.resize(*lpdwNumberOfBytesRead);
+            memcpy(&login_result[0], lpBuffer, *lpdwNumberOfBytesRead);
+            return r;
+        }
+
+        if (stats_set)
+        {
+            auto r = generate_stat_set_response();
+            memcpy(lpBuffer, &r, sizeof(stat_set_response));
+            printf("Using fabricated server response\n");
+            return TRUE;
+        }
+
         auto end_point = results_lookup.find(current_request);
 
         if (end_point != results_lookup.end())
