@@ -118,6 +118,11 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
     else
     {
         stats_get = false;
+
+        for (auto& r : request_count)
+        {
+            r.second = 0;
+        }
     }
 
     stats_set = wcscmp(lpszObjectName, L"/api/statistics/set") == 0;
