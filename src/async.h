@@ -11,3 +11,5 @@ void prefetch_requests(std::string login_result,
     LPCWSTR* lplpszAcceptTypes, 
     DWORD dwFlags, 
     std::unordered_map<std::wstring, std::unordered_map<int, std::string>>* results_lookup);
+
+std::string to_hex(std::string& input);

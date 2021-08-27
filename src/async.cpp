@@ -24,6 +24,7 @@ std::vector<std::string> ggs_status_get_aobs = {
     {"96a008ff0dffff"},
     {"96a008ff0effff"},
     {"96a008ff0fffff"},
+    {"96a008ff10ffff"},
     {"96a008ffffffff"},
     {"96a006ff00ffff"},
     {"96a006ff01ffff"},
@@ -41,6 +42,7 @@ std::vector<std::string> ggs_status_get_aobs = {
     {"96a006ff0dffff"},
     {"96a006ff0effff"},
     {"96a006ff0fffff"},
+    {"96a006ff10ffff"},
     {"96a006ffffffff"},
     {"96a005ffffffff"},
     {"96a0020100ffff"},
@@ -59,6 +61,7 @@ std::vector<std::string> ggs_status_get_aobs = {
     {"96a002010dffff"},
     {"96a002010effff"},
     {"96a002010fffff"},
+    {"96a0020110ffff"},
     {"96a00201ffffff"},
     {"96a0010100feff"},
     {"96a0010100ffff"},
@@ -92,6 +95,8 @@ std::vector<std::string> ggs_status_get_aobs = {
     {"96a001010effff"},
     {"96a001010ffeff"},
     {"96a001010fffff"},
+    {"96a0010110feff"},
+    {"96a0010110ffff"},
     {"96a00101fffeff"},
     {"96a00101ffffff"},
 };
@@ -102,12 +107,12 @@ std::unordered_map<std::wstring, std::vector<std::string>> aobs = {
     {L"/api/catalog/get_follow", std::vector<std::string>{"93000101"}},
     {L"/api/lobby/get_vip_status", std::vector<std::string>{"91a0"}},
     {L"/api/item/get_item", std::vector<std::string>{"9105"}},
-    {L"/api/catalog/get_replay", std::vector<std::string>{"940100059aff000963900c0e010001", "940100059aff000963900c01010001", "940100059aff000963900c0c020001"}},
+    {L"/api/catalog/get_replay", std::vector<std::string>{"940100059aff000963900c09010001", "940100059aff000963900c0c010001", "940100059aff000963900c0a020001"}},
 };
 
 static std::string generate_request(std::string& token, std::string& aob)
 {
-    return "data=9295" + token + "02a5"+"302e302e35" + "03" + aob + "\x00";
+    return "data=9295" + token + "02a5"+"302e302e36" + "03" + aob + "\x00";
 }
 
 struct connection_context

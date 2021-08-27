@@ -174,6 +174,8 @@ void send_request(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength
     HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
 }
 
+#include <iostream>
+#include <fstream>
 BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
 {
     if (login_state)
