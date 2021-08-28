@@ -11,8 +11,6 @@
 #include "detours.h"
 #include "async.h"
 
-#include <iostream>
-
 extern "C" __declspec(dllexport) void dummyExport()
 {
     printf("You are calling the dummy export\n");
@@ -177,6 +175,7 @@ void send_request(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength
     swprintf(header, sizeof(header) / sizeof(*header), L"Content-Length: %d\r\n", dwOptionalLength);
     HttpAddRequestHeadersW(hRequest, &header[0], -1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
     HttpAddRequestHeadersW(hRequest, L"Connection: keep-alive\r\n", -1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
+    HttpAddRequestHeadersW(hRequest, L"Content-Type: text/html; charset=UTF-8", -1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
 
     printf("Sent http request (using thread), optional(size:%i)\n", dwOptionalLength);
     HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
@@ -184,26 +183,14 @@ void send_request(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength
 
 BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
 {
-    if (lobby_get)
-    {
-        auto buffer = std::string((char*)lpOptional, dwOptionalLength);
-        std::cout << "lobby request:" << buffer << "\n";
-    }
-
-    if (floor_get)
-    {
-        auto buffer = std::string((char*)lpOptional, dwOptionalLength);
-        std::cout << "floor request:" << buffer << "\n";
-    }
-
     if (login_state)
     {
-        // if (stats_set || tus_write)
-        // {
-        //     std::thread sender(send_request, hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
-        //     sender.detach();
-        //     return TRUE;
-        // }
+        if (stats_set || tus_write)
+        {
+            std::thread sender(send_request, hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
+            sender.detach();
+            return TRUE;
+        }
 
         auto end_point = results_lookup.find(current_request);
 
@@ -237,16 +224,16 @@ BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer,
 {
     if (login_state)
     {
-        // if (stats_set || stats_get || follow_get)
-        // {
-        //     char* tmp = (char*)lpBuffer;
-        //     tmp[0] = 0xc8; // http status code: 200
-        //     tmp[1] = 0x00;
-        //     tmp[2] = 0x00;
-        //     tmp[3] = 0x00;
+        if (stats_set)
+        {
+            char* tmp = (char*)lpBuffer;
+            tmp[0] = 0xc8; // http status code: 200
+            tmp[1] = 0x00;
+            tmp[2] = 0x00;
+            tmp[3] = 0x00;
 
-        //     return TRUE;
-        // }
+            return TRUE;
+        }
 
         auto end_point = results_lookup.find(current_request);
 
@@ -302,7 +289,7 @@ stat_set_response generate_stat_set_response()
 {
     stat_set_response r = {
         .header={'\x92', '\x98', '\xad', '\x36'},
-        .random={'\x31', '\x32', '\x39', '\x35', '\x32', '\x64', '\x63', '\x66', '\x32', '\x30', '\x62', '\x66'}, // not sure what this is, varies greatly with each request
+        .random={}, // not sure what this is, varies greatly with each request
         .aob1={'\x00', '\xb3'},
         .timestamp={}, // human readable (UTC)
         .aob2={'\xa5'},
@@ -314,7 +301,7 @@ stat_set_response generate_stat_set_response()
         .aob5={'\xa0', '\xa0', '\x91', '\x00'}
     };
 
-    current_time(r);
+    // current_time(r);
 
     memcpy(r.version1, &api_versions[0], 5);
     memcpy(r.version2, &api_versions[1], 5);
@@ -352,21 +339,6 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
         return r;
     }
 
-    if (floor_get)
-    {
-        auto r = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
-        auto buffer = std::string((char*)lpBuffer, *lpdwNumberOfBytesRead);
-        std::cout << "floor response:" << to_hex(buffer) << "\n";
-        return r;
-    }
-
-    if (lobby_get)
-    {
-        auto r = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
-        std::cout << "lobby response:" << std::string((char*)lpBuffer, *lpdwNumberOfBytesRead) << "\n";
-        return r;
-    }
-
     if (login_state)
     {
         if (login_result.empty())
@@ -377,12 +349,13 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
             return r;
         }
 
-        // if (stats_set || tus_write)
-        // {
-        //     auto r = generate_stat_set_response();
-        //     memcpy(lpBuffer, &r, sizeof(stat_set_response));
-        //     return TRUE;
-        // }
+        if (stats_set || tus_write)
+        {
+            auto r = generate_stat_set_response();
+            memcpy(lpBuffer, &r, sizeof(stat_set_response));
+            *lpdwNumberOfBytesRead = sizeof(stat_set_response);
+            return TRUE;
+        }
 
         auto end_point = results_lookup.find(current_request);
 
