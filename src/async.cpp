@@ -110,9 +110,24 @@ std::unordered_map<std::wstring, std::vector<std::string>> aobs = {
     {L"/api/catalog/get_replay", std::vector<std::string>{"940100059aff000963900c09010001", "940100059aff000963900c0c010001", "940100059aff000963900c0a020001"}},
 };
 
-static std::string generate_request(std::string& token, std::string& aob)
+std::string to_hex(std::string& input)
 {
-    return "data=9295" + token + "02a5"+"302e302e36" + "03" + aob + "\x00";
+    static const char hex_digits[] = "0123456789abcdef";
+
+    std::string output;
+    output.reserve(input.length() * 2);
+    for (unsigned char c : input)
+    {
+        output.push_back(hex_digits[c >> 4]);
+        output.push_back(hex_digits[c & 15]);
+    }
+    return output;
+}
+
+static std::string generate_request(std::string& token, std::string& aob, char api_version[5])
+{
+    std::string version(api_version, 5);
+    return "data=9295" + token + "02a5"+ to_hex(version) + "03" + aob + "\x00";
 }
 
 struct connection_context
@@ -128,20 +143,6 @@ struct connection_context
     std::string read_buffer;
     std::string response_payload;
 };
-
-std::string to_hex(std::string& input)
-{
-    static const char hex_digits[] = "0123456789abcdef";
-
-    std::string output;
-    output.reserve(input.length() * 2);
-    for (unsigned char c : input)
-    {
-        output.push_back(hex_digits[c >> 4]);
-        output.push_back(hex_digits[c & 15]);
-    }
-    return output;
-}
 
 void async_callback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
 {
@@ -222,7 +223,8 @@ void prefetch_requests(std::string login_result,
     LPCWSTR lpszVersion, 
     LPCWSTR lpszReferrer, 
     LPCWSTR* lplpszAcceptTypes, 
-    DWORD dwFlags, 
+    DWORD dwFlags,
+    char api_version[5],
     std::unordered_map<std::wstring, std::unordered_map<int, std::string>>* results)
 {
     printf("Async pre-fetch started\n");
@@ -245,8 +247,6 @@ void prefetch_requests(std::string login_result,
         WinHttpCloseHandle(session);
         return;
     }
-
-    
 
     std::string token = login_result.substr(60, 19) + login_result.substr(2, 14);
     token = to_hex(token);
@@ -275,7 +275,7 @@ void prefetch_requests(std::string login_result,
             ctx.end_point_id = j;
             ctx.read_complete = CreateEvent(NULL, FALSE, FALSE, NULL);
             ctx.timeout = 5000; // 5 seconds
-            ctx.request_payload = generate_request(token, payload);
+            ctx.request_payload = generate_request(token, payload, api_version);
             ctx.end_point = end_points.first;
             ctx.request_handle = WinHttpOpenRequest(connect, L"POST", end_points.first.c_str(), NULL, WINHTTP_NO_REFERER, lplpszAcceptTypes, WINHTTP_FLAG_SECURE);
 

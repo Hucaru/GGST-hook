@@ -4,12 +4,14 @@
 #include <unordered_map>
 #include <thread>
 #include <vector>
-// #include <winhttp.h>
 #include <wininet.h>
 #include <stdio.h>
 #include <thread>
+#include <time.h>
 #include "detours.h"
 #include "async.h"
+
+#include <iostream>
 
 extern "C" __declspec(dllexport) void dummyExport()
 {
@@ -52,6 +54,10 @@ bool replay_get;
 bool vip_status;
 bool item_get;
 bool env_get;
+bool lobby_get;
+bool floor_get;
+
+char api_versions[3][5];
 
 std::string login_result;
 
@@ -112,7 +118,7 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
 
         if (login_state && prefetch)
         {
-            prefetch_requests(login_result, server_name.c_str(), server_port, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, &results_lookup);
+            prefetch_requests(login_result, server_name.c_str(), server_port, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, api_versions[0], &results_lookup);
             prefetch = false;
         }
     }
@@ -134,6 +140,8 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
     vip_status = wcscmp(lpszObjectName, L"/api/lobby/get_vip_status") == 0 ? true : false;
     item_get = wcscmp(lpszObjectName, L"/api/item/get_item") == 0 ? true : false;
     env_get = wcscmp(lpszObjectName, L"/api/sys/get_env") == 0 ? true : false;
+    lobby_get = wcscmp(lpszObjectName, L"/api/catalog/get_lobby") == 0 ? true : false;
+    floor_get = wcscmp(lpszObjectName, L"/api/catalog/get_floor") == 0 ? true : false;
 
     current_request = lpszObjectName;
 
@@ -176,14 +184,26 @@ void send_request(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength
 
 BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
 {
+    if (lobby_get)
+    {
+        auto buffer = std::string((char*)lpOptional, dwOptionalLength);
+        std::cout << "lobby request:" << buffer << "\n";
+    }
+
+    if (floor_get)
+    {
+        auto buffer = std::string((char*)lpOptional, dwOptionalLength);
+        std::cout << "floor request:" << buffer << "\n";
+    }
+
     if (login_state)
     {
-        if (stats_set || tus_write)
-        {
-            std::thread sender(send_request, hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
-            sender.detach();
-            return TRUE;
-        }
+        // if (stats_set || tus_write)
+        // {
+        //     std::thread sender(send_request, hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
+        //     sender.detach();
+        //     return TRUE;
+        // }
 
         auto end_point = results_lookup.find(current_request);
 
@@ -217,16 +237,16 @@ BOOL HttpQueryInfoW_hook(HINTERNET hRequest, DWORD dwInfoLevel, LPVOID lpBuffer,
 {
     if (login_state)
     {
-        if (stats_set || stats_get || follow_get)
-        {
-            char* tmp = (char*)lpBuffer;
-            tmp[0] = 0xc8; // http status code: 200
-            tmp[1] = 0x00;
-            tmp[2] = 0x00;
-            tmp[3] = 0x00;
+        // if (stats_set || stats_get || follow_get)
+        // {
+        //     char* tmp = (char*)lpBuffer;
+        //     tmp[0] = 0xc8; // http status code: 200
+        //     tmp[1] = 0x00;
+        //     tmp[2] = 0x00;
+        //     tmp[3] = 0x00;
 
-            return TRUE;
-        }
+        //     return TRUE;
+        // }
 
         auto end_point = results_lookup.find(current_request);
 
@@ -270,21 +290,35 @@ struct stat_set_response
     char aob5[4];
 };
 
+void current_time(stat_set_response& stat_resp) {
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    strftime(stat_resp.timestamp, sizeof(stat_resp.timestamp), "%Y/%m/%d %X", &tstruct);
+}
+
 stat_set_response generate_stat_set_response()
 {
     stat_set_response r = {
         .header={'\x92', '\x98', '\xad', '\x36'},
-        .random={}, // can leave empty
+        .random={'\x31', '\x32', '\x39', '\x35', '\x32', '\x64', '\x63', '\x66', '\x32', '\x30', '\x62', '\x66'}, // not sure what this is, varies greatly with each request
         .aob1={'\x00', '\xb3'},
-        .timestamp={}, // human readable (UTC) can leave empty
+        .timestamp={}, // human readable (UTC)
         .aob2={'\xa5'},
-        .version1={'\x30', '\x2e', '\x30', '\x2e', '\x35'},
+        .version1={}, // populated further down
         .aob3={'\xa5'},
-        .version2={'\x30', '\x2e', '\x30', '\x2e', '\x32'},
+        .version2={}, // populated further down
         .aob4={'\xa5'},
-        .version3={'\x30', '\x2e', '\x30', '\x2e', '\x32'},
+        .version3={}, // populated further down
         .aob5={'\xa0', '\xa0', '\x91', '\x00'}
     };
+
+    current_time(r);
+
+    memcpy(r.version1, &api_versions[0], 5);
+    memcpy(r.version2, &api_versions[1], 5);
+    memcpy(r.version3, &api_versions[2], 5);
 
     return r;
 }
@@ -300,6 +334,39 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
         return TRUE;
     }
 
+    if (env_get)
+    {
+        auto r = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
+        int version = -1;
+
+        for (auto i = 0; i < *lpdwNumberOfBytesRead; i++)
+        {
+            if (((char*)lpBuffer)[i] == '\xa5')
+            {
+                version++;
+                memcpy(&api_versions[version], ((char*)lpBuffer) + i + 1, 5);
+                printf("API version %d: %.*s\n", version, (int)sizeof(api_versions[version]), api_versions[version]);
+            }
+        }
+
+        return r;
+    }
+
+    if (floor_get)
+    {
+        auto r = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
+        auto buffer = std::string((char*)lpBuffer, *lpdwNumberOfBytesRead);
+        std::cout << "floor response:" << to_hex(buffer) << "\n";
+        return r;
+    }
+
+    if (lobby_get)
+    {
+        auto r = InternetReadFile_original(hFile, lpBuffer, dwNumberOfBytesToRead, lpdwNumberOfBytesRead);
+        std::cout << "lobby response:" << std::string((char*)lpBuffer, *lpdwNumberOfBytesRead) << "\n";
+        return r;
+    }
+
     if (login_state)
     {
         if (login_result.empty())
@@ -310,13 +377,12 @@ BOOL InternetReadFile_hook(HINTERNET hFile, LPVOID lpBuffer, DWORD dwNumberOfByt
             return r;
         }
 
-        if (stats_set)
-        {
-            auto r = generate_stat_set_response();
-            memcpy(lpBuffer, &r, sizeof(stat_set_response));
-            printf("Using fabricated server response\n");
-            return TRUE;
-        }
+        // if (stats_set || tus_write)
+        // {
+        //     auto r = generate_stat_set_response();
+        //     memcpy(lpBuffer, &r, sizeof(stat_set_response));
+        //     return TRUE;
+        // }
 
         auto end_point = results_lookup.find(current_request);
 
