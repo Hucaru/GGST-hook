@@ -8,7 +8,9 @@ By caching handles and requests the client makes. This means tls/tcp initialisat
 [Totsugeki](https://github.com/optix2000/totsugeki) for the pre-fetch idea
 
 ## How to get
-Download the latest release, or alternatively build from source:
+Download the latest release and copy `ggs_hook.dll` into `\SteamApps\common\GUILTY GEAR STRIVE\Engine\Binaries\ThirdParty\Steamworks\Steamv147\Win64`. If you want to auto inject yourself then follow the instructions in the How to auto inject section, otherwise copy `steam_api64.dll` into the same folder after making a back up of the original.
+
+To build from source follow these instructions:
 
 Make sure visual studio is installed and edit the `VSTOOLS` variable in `build.bat` to point to your installed version of `vcvars64.bat`. Make sure you point to the 64-bit version.
 
