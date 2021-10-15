@@ -175,7 +175,6 @@ void send_request(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength
     swprintf(header, sizeof(header) / sizeof(*header), L"Content-Length: %d\r\n", dwOptionalLength);
     HttpAddRequestHeadersW(hRequest, &header[0], -1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
     HttpAddRequestHeadersW(hRequest, L"Connection: keep-alive\r\n", -1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
-    HttpAddRequestHeadersW(hRequest, L"Content-Type: text/html; charset=UTF-8", -1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
 
     printf("Sent http request (using thread), optional(size:%i)\n", dwOptionalLength);
     HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
@@ -217,6 +216,7 @@ BOOL HttpSendRequestW_hook(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD dwHead
     HttpAddRequestHeadersW(hRequest, L"Connection: keep-alive\r\n", -1, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
 
     printf("Sent http request, optional(size:%i)\n", dwOptionalLength);
+
     return HttpSendRequestW_original(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
 }
 
@@ -282,7 +282,7 @@ void current_time(stat_set_response& stat_resp) {
     struct tm  tstruct;
     char       buf[80];
     tstruct = *localtime(&now);
-    strftime(stat_resp.timestamp, sizeof(stat_resp.timestamp), "%Y/%m/%d %X", &tstruct);
+    strftime(&stat_resp.timestamp[0], sizeof(stat_resp.timestamp), "%Y/%m/%d %X", &tstruct);
 }
 
 stat_set_response generate_stat_set_response()
@@ -301,7 +301,7 @@ stat_set_response generate_stat_set_response()
         .aob5={'\xa0', '\xa0', '\x91', '\x00'}
     };
 
-    // current_time(r);
+    current_time(r);
 
     memcpy(r.version1, &api_versions[0], 5);
     memcpy(r.version2, &api_versions[1], 5);
