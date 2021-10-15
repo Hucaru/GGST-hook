@@ -387,7 +387,7 @@ BOOL IsDebuggerPresent_hook()
     return FALSE;
 }
 
-BOOL apply_hook(__inout PVOID* ppvTarget, __in PVOID pvDetour, char* name)
+BOOL apply_hook(__inout PVOID* ppvTarget, __in PVOID pvDetour, const char* name)
 {
     printf("Hooking %s....", name);
     if (DetourTransactionBegin() != NO_ERROR)
