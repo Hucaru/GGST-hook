@@ -8,10 +8,9 @@ By caching handles and requests the client makes. This means tls/tcp initialisat
 [Totsugeki](https://github.com/optix2000/totsugeki) for the pre-fetch idea
 
 ## How to get
-Download the latest release and copy `ggs_hook.dll` into `\SteamApps\common\GUILTY GEAR STRIVE\Engine\Binaries\ThirdParty\Steamworks\Steamv147\Win64`. If you want to auto inject yourself then follow the instructions in the How to auto inject section, otherwise copy `steam_api64.dll` into the same folder after making a back up of the original.
+Download the latest release and copy `ggs_hook.dll` along with `steam_api64.dll` (backup the original) into `\SteamApps\common\GUILTY GEAR STRIVE\Engine\Binaries\ThirdParty\Steamworks\Steamv147\Win64`. Alternatively you can build from source and set-up the auto injection yourself by following the `Compiling` and `How to auto inject` sections. 
 
-To build from source follow these instructions:
-
+## Compiling
 Make sure visual studio is installed and edit the `VSTOOLS` variable in `build.bat` to point to your installed version of `vcvars64.bat`. Make sure you point to the 64-bit version.
 
 Download the Microsoft Detours repo and compile the x64 lib and copy the compiled lib and header file into this directory.
