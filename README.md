@@ -1,10 +1,10 @@
 # Guilty Gear Strive Client Hook
 Decreases the time all http network operations take.This is resilient to client version updates (unless they overhaul their networking) and does not requrie you to run a proxy application.
 
-# How this works
+## How this works
 By caching handles and requests the client makes. This means tls/tcp initialisation packets are no longer sent for every request
 
-# Acknowledgements
+## Acknowledgements
 [Totsugeki](https://github.com/optix2000/totsugeki) for the pre-fetch idea
 
 ## How to get
