@@ -8,23 +8,24 @@
 std::vector<std::string> ggs_status_get_aobs = {
     {"96a007ffffffff"},
     {"96a009ffffffff"},
-    {"96a008ff00ffff"},
-    {"96a008ff01ffff"},
-    {"96a008ff02ffff"},
-    {"96a008ff03ffff"},
-    {"96a008ff04ffff"},
-    {"96a008ff05ffff"},
-    {"96a008ff06ffff"},
-    {"96a008ff07ffff"},
-    {"96a008ff08ffff"},
-    {"96a008ff09ffff"},
-    {"96a008ff0affff"},
-    {"96a008ff0bffff"},
-    {"96a008ff0cffff"},
-    {"96a008ff0dffff"},
-    {"96a008ff0effff"},
-    {"96a008ff0fffff"},
-    {"96a008ff10ffff"},
+    {"96a008ff00ffff"}, // sol
+    {"96a008ff01ffff"}, // ky
+    {"96a008ff02ffff"}, // may
+    {"96a008ff03ffff"}, // axl
+    {"96a008ff04ffff"}, // chipp
+    {"96a008ff05ffff"}, // potemkin
+    {"96a008ff06ffff"}, // faust
+    {"96a008ff07ffff"}, // millia
+    {"96a008ff08ffff"}, // zato
+    {"96a008ff09ffff"}, // ramlethal
+    {"96a008ff0affff"}, // leo
+    {"96a008ff0bffff"}, // nagoriyuki
+    {"96a008ff0cffff"}, // giovanna
+    {"96a008ff0dffff"}, // anji
+    {"96a008ff0effff"}, // i-no
+    {"96a008ff0fffff"}, // goldlewis
+    {"96a008ff10ffff"}, // jack-o
+    {"96a008ff11ffff"}, // happy chaos
     {"96a008ffffffff"},
 };
 
