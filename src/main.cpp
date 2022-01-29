@@ -131,15 +131,15 @@ HINTERNET HttpOpenRequestW_hook(HINTERNET hConnect, LPCWSTR lpszVerb, LPCWSTR lp
     }
 
     stats_set = wcscmp(lpszObjectName, L"/api/statistics/set") == 0;
-    tus_write = wcscmp(lpszObjectName, L"/api/tus/write") == 0 ? true : false;
-    block_get = wcscmp(lpszObjectName, L"/api/catalog/get_block") == 0 ? true : false;
-    follow_get = wcscmp(lpszObjectName, L"/api/catalog/get_follow") == 0 ? true : false;
-    replay_get = wcscmp(lpszObjectName, L"/api/catalog/get_replay") == 0 ? true : false;
-    vip_status = wcscmp(lpszObjectName, L"/api/lobby/get_vip_status") == 0 ? true : false;
-    item_get = wcscmp(lpszObjectName, L"/api/item/get_item") == 0 ? true : false;
-    env_get = wcscmp(lpszObjectName, L"/api/sys/get_env") == 0 ? true : false;
-    lobby_get = wcscmp(lpszObjectName, L"/api/catalog/get_lobby") == 0 ? true : false;
-    floor_get = wcscmp(lpszObjectName, L"/api/catalog/get_floor") == 0 ? true : false;
+    tus_write = wcscmp(lpszObjectName, L"/api/tus/write") == 0;
+    block_get = wcscmp(lpszObjectName, L"/api/catalog/get_block") == 0;
+    follow_get = wcscmp(lpszObjectName, L"/api/catalog/get_follow") == 0;
+    replay_get = wcscmp(lpszObjectName, L"/api/catalog/get_replay") == 0;
+    vip_status = wcscmp(lpszObjectName, L"/api/lobby/get_vip_status") == 0;
+    item_get = wcscmp(lpszObjectName, L"/api/item/get_item") == 0;
+    env_get = wcscmp(lpszObjectName, L"/api/sys/get_env") == 0;
+    lobby_get = wcscmp(lpszObjectName, L"/api/catalog/get_lobby") == 0;
+    floor_get = wcscmp(lpszObjectName, L"/api/catalog/get_floor") == 0;
 
     current_request = lpszObjectName;
 
@@ -278,11 +278,15 @@ struct stat_set_response
 };
 
 void current_time(stat_set_response& stat_resp) {
-    time_t     now = time(0);
-    struct tm  tstruct;
-    char       buf[80];
-    tstruct = *localtime(&now);
-    strftime(&stat_resp.timestamp[0], sizeof(stat_resp.timestamp), "%Y/%m/%d %X", &tstruct);
+    time_t now = time(0);
+    tm  *tstruct = nullptr;
+    char buf[80];
+    tstruct = localtime(&now);
+
+    if (tstruct)
+    {
+        strftime(&stat_resp.timestamp[0], sizeof(stat_resp.timestamp), "%Y/%m/%d %X", tstruct);
+    }
 }
 
 stat_set_response generate_stat_set_response()
@@ -480,7 +484,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
         AllocConsole();
         AttachConsole(GetCurrentProcessId());
 
-        freopen("CON", "w", stdout);
+        freopen("CON", "w", stdout); // CON is windows device/file descriptor for current proc console, /dev/tty is the equivalent unix file descriptor
 
         char title[128];
         sprintf_s(title, "Attached to: %i", GetCurrentProcessId());

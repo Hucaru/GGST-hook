@@ -26,6 +26,7 @@ std::vector<std::string> ggs_status_get_aobs = {
     {"96a008ff0fffff"}, // goldlewis
     {"96a008ff10ffff"}, // jack-o
     {"96a008ff11ffff"}, // happy chaos
+    {"96a008ff12ffff"}, // baiken
     {"96a008ffffffff"},
 };
 
